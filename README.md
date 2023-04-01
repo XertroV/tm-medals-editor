@@ -1,5 +1,7 @@
 # Medals Editor
 
+Easily edit medal times in the editor.
+
 License: Public Domain
 
 Authors: XertroV
