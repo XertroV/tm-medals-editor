@@ -1,0 +1,9 @@
+[meta]
+name     = "Medals Editor"
+author   = "XertroV"
+category = "Map Editor"
+version  = "0.0.0"
+siteid   = 360
+
+[script]
+#__DEFINES__
