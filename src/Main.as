@@ -5,7 +5,6 @@ void Main() {
     if (!UserHasPermissions) {
         NotifyError("You lack permissions to use the Advanced Editor -- this plugin will do nothing.");
     }
-    NotifyError("asdf");
 }
 
 void Notify(const string &in msg) {
@@ -71,6 +70,10 @@ void Render() {
     auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
     if (editor is null && GetApp().Editor !is null) {
         // we're in a mediatracker editor or something -- *an* editor, not *the* editor. so just hide the window.
+        return;
+    }
+    if (GetApp().Editor !is null && GetApp().CurrentPlayground !is null) {
+        // in validation mode or something, hide
         return;
     }
 
