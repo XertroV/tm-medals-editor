@@ -86,13 +86,13 @@ void Render() {
         return;
     }
 
-    vec2 size = vec2(450, 300);
+    vec2 size = vec2(500, 250);
     vec2 pos = (vec2(Draw::GetWidth(), Draw::GetHeight()) - size) / 2.;
     UI::SetNextWindowSize(int(size.x), int(size.y), UI::Cond::FirstUseEver);
     UI::SetNextWindowPos(int(pos.x), int(pos.y), UI::Cond::FirstUseEver);
     UI::PushStyleColor(UI::Col::FrameBg, vec4(.2, .2, .2, .5));
 
-    if (UI::Begin(MenuTitle, ShowWindow)) {
+    if (UI::Begin(MenuTitle, ShowWindow, UI::WindowFlags::None)) {
         UI::AlignTextToFramePadding();
 
         // just check for any editor here so we don't reset this setting when in mediatracker
