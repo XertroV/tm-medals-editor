@@ -68,12 +68,21 @@ void Render() {
     if (!ShowWindow) return;
 
     auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
-    if (editor is null && GetApp().Editor !is null) {
+    bool noEditorAtAll = GetApp().Editor is null;
+    if (editor is null && !noEditorAtAll) {
         // we're in a mediatracker editor or something -- *an* editor, not *the* editor. so just hide the window.
         return;
     }
-    if (GetApp().Editor !is null && GetApp().CurrentPlayground !is null) {
+    if (!noEditorAtAll && GetApp().CurrentPlayground !is null) {
         // in validation mode or something, hide
+        return;
+    }
+    if (noEditorAtAll) {
+        if (LockTimesAndValidation) {
+            // stop watching if we leave all editors
+            LockTimesAndValidation = false;
+        }
+        // hide outside of editor
         return;
     }
 
