@@ -121,7 +121,7 @@ void Render() {
 
 
             if (UI::BeginTable("medals", 2, UI::TableFlags::SizingStretchProp)) {
-                UI::BeginDisabled(LockTimesAndValidation);
+                UI::BeginDisabled(LockTimesAndValidation || !validated);
 
                 UI::TableNextColumn();
                 tmpValues[0] = uint(Math::Max(0, UI::InputInt("Author##set-medal", int(chParams.AuthorTime), 100)));
@@ -150,10 +150,13 @@ void Render() {
                         tmpValues[i] = tmpValues[i - 1] + 1;
                     }
                 }
-                chParams.BronzeTime = tmpValues[3];
-                chParams.SilverTime = tmpValues[2];
-                chParams.GoldTime = tmpValues[1];
-                chParams.AuthorTime = tmpValues[0];
+
+                if (validated) {
+                    chParams.BronzeTime = tmpValues[3];
+                    chParams.SilverTime = tmpValues[2];
+                    chParams.GoldTime = tmpValues[1];
+                    chParams.AuthorTime = tmpValues[0];
+                }
 
                 if (wasLocked != LockTimesAndValidation) {
                     UpdateLockedTimes(chParams);
