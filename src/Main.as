@@ -33,6 +33,7 @@ bool ShowWindow = true;
 void RenderMenu() {
     if (UI::MenuItem(MenuTitle, "", ShowWindow)) {
         ShowWindow = !ShowWindow;
+        LockTimesAndValidation = false;
     }
 }
 
@@ -40,27 +41,59 @@ bool LockTimesAndValidation = false;
 uint[] lockedTimes = {0, 0, 0, 0};
 bool lockedValidation = false;
 
-void UpdateLockedTimes(CGameCtnChallengeParameters@ params) {
+void UpdateLockedTimes(CGameCtnChallenge@ map) {
     if (LockTimesAndValidation) {
-        lockedTimes[0] = params.AuthorTime;
-        lockedTimes[1] = params.GoldTime;
-        lockedTimes[2] = params.SilverTime;
-        lockedTimes[3] = params.BronzeTime;
+        lockedTimes[0] = map.TMObjective_AuthorTime;
+        lockedTimes[1] = map.TMObjective_GoldTime;
+        lockedTimes[2] = map.TMObjective_SilverTime;
+        lockedTimes[3] = map.TMObjective_BronzeTime;
     }
 }
 
-void SetTimesIfLocked(CGameCtnChallengeParameters@ params) {
+void SetTimesIfLocked(CGameCtnChallenge@ map) {
     if (LockTimesAndValidation) {
         auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
         editor.PluginMapType.ValidationStatus = CGameEditorPluginMapMapType::EValidationStatus::Validated;
-        params.AuthorTime = lockedTimes[0];
-        params.GoldTime = lockedTimes[1];
-        params.SilverTime = lockedTimes[2];
-        params.BronzeTime = lockedTimes[3];
+        map.TMObjective_AuthorTime = lockedTimes[0];
+        map.TMObjective_GoldTime = lockedTimes[1];
+        map.TMObjective_SilverTime = lockedTimes[2];
+        map.TMObjective_BronzeTime = lockedTimes[3];
     }
 }
 
+uint[] tmpValuesPre = {0, 0, 0, 0};
 uint[] tmpValues = {0, 0, 0, 0};
+
+bool DoTmpAndPreDiffer() {
+    for (uint i = 0; i < tmpValues.Length; i++) {
+        if (tmpValues[i] != tmpValuesPre[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void CopyPreToTmp() {
+    for (uint i = 0; i < tmpValuesPre.Length; i++) {
+        tmpValues[i] = tmpValuesPre[i];
+    }
+}
+
+void CopyTmpToPre() {
+    for (uint i = 0; i < tmpValues.Length; i++) {
+        tmpValuesPre[i] = tmpValues[i];
+    }
+}
+
+void CheckUpdateTmpFromMap(CGameCtnChallenge@ map) {
+    if (tmpValues[0] != map.TMObjective_AuthorTime) {
+        tmpValues[0] = map.TMObjective_AuthorTime;
+        tmpValues[1] = map.TMObjective_GoldTime;
+        tmpValues[2] = map.TMObjective_SilverTime;
+        tmpValues[3] = map.TMObjective_BronzeTime;
+        CopyTmpToPre();
+    }
+}
 
 /** Render function called every frame.
 */
@@ -101,10 +134,13 @@ void Render() {
         }
 
         if (UserHasPermissions && editor !is null) {
-            UI::Text("Medal Times (ms) \\$888for \\$z" + editor.Challenge.MapName + " \\$888by \\$z" + editor.Challenge.AuthorNickName);
-            auto chParams = editor.Challenge.ChallengeParameters;
+            auto map = editor.Challenge;
+            UI::Text("Medal Times (ms) \\$888for \\$z" + map.MapName + " \\$888by \\$z" + map.AuthorNickName);
+            // auto chParams = map.ChallengeParameters;
             auto validated = editor.PluginMapType.ValidationStatus == CGameEditorPluginMapMapType::EValidationStatus::Validated;
-            SetTimesIfLocked(chParams);
+            SetTimesIfLocked(map);
+
+            CheckUpdateTmpFromMap(map);
 
             bool wasLocked = LockTimesAndValidation;
             LockTimesAndValidation = UI::Checkbox("Lock times and validation status", LockTimesAndValidation);
@@ -113,8 +149,9 @@ void Render() {
             UI::BeginDisabled(validated || LockTimesAndValidation);
             if (UI::Button("Validate")) {
                 editor.PluginMapType.ValidationStatus = CGameEditorPluginMapMapType::EValidationStatus::Validated;
-                if (chParams.AuthorTime == 0 || int(chParams.AuthorTime) < 0) {
-                    chParams.AuthorTime = 55123;
+                if (map.TMObjective_AuthorTime == 0 || int(map.TMObjective_AuthorTime) < 0) {
+                    map.TMObjective_AuthorTime = 55123;
+                    // chParams.AuthorTime = 55123;
                 }
             }
             UI::EndDisabled();
@@ -123,43 +160,45 @@ void Render() {
             if (UI::BeginTable("medals", 2, UI::TableFlags::SizingStretchProp)) {
                 UI::BeginDisabled(LockTimesAndValidation || !validated);
 
-                UI::TableNextColumn();
-                tmpValues[0] = uint(Math::Max(0, UI::InputInt("Author##set-medal", int(chParams.AuthorTime), 100)));
-                UI::TableNextColumn();
-                UI::Text(Time::Format(chParams.AuthorTime));
+                CopyTmpToPre();
 
                 UI::TableNextColumn();
-                tmpValues[1] = uint(Math::Max(chParams.AuthorTime, UI::InputInt("Gold##set-medal", int(chParams.GoldTime), 100)));
+                tmpValues[0] = uint(Math::Max(0, UI::InputInt("Author##set-medal", int(tmpValues[0]), 100)));
                 UI::TableNextColumn();
-                UI::Text(Time::Format(chParams.GoldTime));
+                UI::Text(Time::Format(map.TMObjective_AuthorTime));
 
                 UI::TableNextColumn();
-                tmpValues[2] = uint(Math::Max(chParams.GoldTime, UI::InputInt("Silver##set-medal", int(chParams.SilverTime), 100)));
+                tmpValues[1] = uint(Math::Max(tmpValues[0], UI::InputInt("Gold##set-medal", int(tmpValues[1]), 100)));
                 UI::TableNextColumn();
-                UI::Text(Time::Format(chParams.SilverTime));
+                UI::Text(Time::Format(map.TMObjective_GoldTime));
 
                 UI::TableNextColumn();
-                tmpValues[3] = uint(Math::Max(chParams.SilverTime, UI::InputInt("Bronze##set-medal", int(chParams.BronzeTime), 100)));
+                tmpValues[2] = uint(Math::Max(tmpValues[1], UI::InputInt("Silver##set-medal", int(tmpValues[2]), 100)));
                 UI::TableNextColumn();
-                UI::Text(Time::Format(chParams.BronzeTime));
+                UI::Text(Time::Format(map.TMObjective_SilverTime));
+
+                UI::TableNextColumn();
+                tmpValues[3] = uint(Math::Max(tmpValues[2], UI::InputInt("Bronze##set-medal", int(tmpValues[3]), 100)));
+                UI::TableNextColumn();
+                UI::Text(Time::Format(map.TMObjective_BronzeTime));
 
                 UI::EndDisabled();
 
                 for (uint i = 1; i < tmpValues.Length; i++) {
                     if (tmpValues[i] < tmpValues[i - 1]) {
-                        tmpValues[i] = tmpValues[i - 1] + 1;
+                        tmpValues[i] = tmpValues[i - 1] + 100;
                     }
                 }
 
-                if (validated) {
-                    chParams.BronzeTime = tmpValues[3];
-                    chParams.SilverTime = tmpValues[2];
-                    chParams.GoldTime = tmpValues[1];
-                    chParams.AuthorTime = tmpValues[0];
+                if (validated && DoTmpAndPreDiffer()) {
+                    map.TMObjective_AuthorTime = tmpValues[0];
+                    map.TMObjective_GoldTime = tmpValues[1];
+                    map.TMObjective_SilverTime = tmpValues[2];
+                    map.TMObjective_BronzeTime = tmpValues[3];
                 }
 
                 if (wasLocked != LockTimesAndValidation) {
-                    UpdateLockedTimes(chParams);
+                    UpdateLockedTimes(map);
                 }
 
                 UI::EndTable();
@@ -172,6 +211,11 @@ void Render() {
     }
     UI::End();
     UI::PopStyleColor();
+
+    // if we close the window
+    if (!ShowWindow) {
+        LockTimesAndValidation = false;
+    }
 }
 
 void AddSimpleTooltip(const string &in msg) {
