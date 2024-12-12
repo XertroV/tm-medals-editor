@@ -190,7 +190,7 @@ void Render() {
                     }
                 }
 
-                if (validated && DoTmpAndPreDiffer()) {
+                if (validated) {
                     map.TMObjective_AuthorTime = tmpValues[0];
                     map.TMObjective_GoldTime = tmpValues[1];
                     map.TMObjective_SilverTime = tmpValues[2];
